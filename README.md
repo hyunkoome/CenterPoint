@@ -269,7 +269,7 @@ OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.2625
 OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.3141 
 ```
 
-- If you set `test: 25000` of `MAX_NUMBER_OF_VOXELS` at the `cfgs/waymo_models/centerpoint_pillar_inference.yaml` like TensorRT (`centerpoint/config.yaml`),
+- If you set [`test: 25000` of `MAX_NUMBER_OF_VOXELS`](https://github.com/JongRok-Lee/CenterPoint/blob/1838eac8a43952850eba75c7b1de8eb244291889/tools/cfgs/waymo_models/centerpoint_pillar_inference.yaml#L22) at the `cfgs/waymo_models/centerpoint_pillar_inference.yaml` like TensorRT (`centerpoint/config.yaml`),
 - You can get more similar results as shown:
 ```
 2024-07-08 09:57:04,120   INFO  
