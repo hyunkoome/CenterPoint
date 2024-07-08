@@ -7,6 +7,16 @@ Build the docker base image.
 ```shell script
 docker build -f docker/env.Dockerfile -t openpcdet-env docker/
 ```
+## Container Start
+Start the container.
+``` shell
+docker compose up --build -d
+```
+
+Execute the container
+```
+docker exec -it centerpoint bash
+```
 ## User Configuration
 Get your GID, UID, and username.
 ``` shell
@@ -21,15 +31,6 @@ Fill in the `.env` file with the GID, UID, and username like below.
 ``` shell
 HOST_UID=1000
 HOST_GID=1000
-HOST_USER=$(whoami) # current user name
-```
-## Container Start
-Start the container.
-``` shell
-docker compose up --build -d
+HOST_USER=lidar
 ```
 
-Execute the container
-```
-docker exec -it centerpoint bash
-```
