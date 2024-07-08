@@ -19,7 +19,7 @@ DATA_CONFIG:
             MAX_POINTS_PER_VOXEL: 32
             MAX_NUMBER_OF_VOXELS: {
                 'train': 150000,
-                'test': 25000
+                'test': 150000
             }
 
 MODEL:
