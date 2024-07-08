@@ -17,7 +17,7 @@
 
 ## 1) Set Environment
 
-### 1.2 Install Docker Engine on Ubuntu
+### 1.1 Install Docker Engine on Ubuntu
 - Please refer to the [`docker.docs`](https://docs.docker.com/engine/install/ubuntu/) for more details.
 - If you would like to know more details, please refer to:
   - [`install guide for nvidia container toolkit`](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) 
@@ -28,9 +28,9 @@
 sudo chmod 666 /var/run/docker.sock
 ```
 
-### 1.3 Clone this repository
+### 1.2 Clone this repository
 
-### 1.4 Docker Container Start
+### 1.3 Docker Container Start
 
 - Build the docker base image
 ```shell script
@@ -44,7 +44,7 @@ docker compose up --build -d
 
 - Please refer to the [docker/README.md](docker/README.md) for more details.
 
-### 1.5 Prepare Datasets 
+### 1.4 Prepare Datasets 
 
 - For Waymo datasets, Install the official `waymo-open-dataset` by running the following command:
 ``` shell
@@ -72,7 +72,7 @@ python -m pcdet.datasets.waymo.waymo_dataset --func create_waymo_infos \
 
 - Please refer to the [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for more details.
 
-### 1.6 PCDET Installation
+### 1.5 PCDET Installation
 
 - Execute the container
 ```
@@ -154,7 +154,27 @@ rviz2
 <img src="sources/rviz2.png" align="center" width="100%">
 <img src="sources/fig1.png" align="center" width="100%">
 
-## 4) Usage: Inference Method using ROS2 *C++* Node on the Container ENV (Comming soon....)
+## 4) Usage: Inference Method using ROS2 *C++* Node with TensorRT on the Container ENV 
+
+### 4.0 Install `pybind11` and `centerpoint/pybind` module
+
+- If you already installed in the `1.5 PCDET Installation`, skip please.
+  - Install pybind11
+``` shell
+cd ~/
+git clone git@github.com:pybind/pybind11.git
+cd pybind11
+cmake .
+make install
+```
+
+- To evaluate TensorRT results, you have to wrap the c++ to python API.
+- Build Python module 
+``` shell
+cd centerpoint/pybind
+cmake -BRelease
+cmake --build Release
+```
 
 ### 4.1 Convert Onnx file from Pytorch 'pth' model file
 ``` shell
@@ -216,7 +236,10 @@ rviz2
 
 ## 5) Evaluation
 
-- Install pybind11 (if you already installed in the `1.6 PCDET Installation`, skip please)
+### 5.0 Install `pybind11` and `centerpoint/pybind` module
+- If you already set in the `Section of 4.0`, please jump the `Section of 5.1`.
+- If you already installed in the `1.5 PCDET Installation`, skip please.
+  - Install pybind11
 ``` shell
 cd ~/
 git clone git@github.com:pybind/pybind11.git
@@ -225,7 +248,7 @@ cmake .
 make install
 ```
 
-- To evaluate TensorRT results, you have to wrap the c++ to python API. (if you already installed in the training step, skip please)
+- To evaluate TensorRT results, you have to wrap the c++ to python API.
 - Build Python module 
 ``` shell
 cd centerpoint/pybind
@@ -269,7 +292,7 @@ OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.2625
 OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.3141 
 ```
 
-- If you set [`test: 25000` of `MAX_NUMBER_OF_VOXELS`](https://github.com/JongRok-Lee/CenterPoint/blob/1838eac8a43952850eba75c7b1de8eb244291889/tools/cfgs/waymo_models/centerpoint_pillar_inference.yaml#L22) at the `cfgs/waymo_models/centerpoint_pillar_inference.yaml` like TensorRT (`centerpoint/config.yaml`),
+- If you set `test: 25000` of `MAX_NUMBER_OF_VOXELS` at the `cfgs/waymo_models/centerpoint_pillar_inference.yaml` like TensorRT (`centerpoint/config.yaml`),
 - You can get more similar results as shown:
 ```
 2024-07-08 09:57:04,120   INFO  
