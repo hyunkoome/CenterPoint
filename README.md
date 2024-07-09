@@ -17,18 +17,20 @@
 
 ## 1) Set Environment
 
-### 1.2 Install Docker Engine on Ubuntu
+### 1.1 Install Docker Engine on Ubuntu
 - Please refer to the [`docker.docs`](https://docs.docker.com/engine/install/ubuntu/) for more details.
-- Please refer to the [`install guide for nvidia container toolkit`](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) and [`nvidia container toolkit`](https://github.com/NVIDIA/nvidia-container-toolkit?tab=readme-ov-file) for more details.
+- If you would like to know more details, please refer to:
+  - [`install guide for nvidia container toolkit`](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) 
+  - [`nvidia container toolkit`](https://github.com/NVIDIA/nvidia-container-toolkit?tab=readme-ov-file) 
 
 - docker 설치 후 /var/run/docker.sock의 permission denied 발생하는 경우
 ``` shell
 sudo chmod 666 /var/run/docker.sock
 ```
 
-### 1.3 Clone this repository
+### 1.2 Clone this repository
 
-### 1.4 Docker Container Start
+### 1.3 Docker Container Start
 
 - Build the docker base image
 ```shell script
@@ -42,7 +44,7 @@ docker compose up --build -d
 
 - Please refer to the [docker/README.md](docker/README.md) for more details.
 
-### 1.5 Prepare Datasets 
+### 1.4 Prepare Datasets 
 
 - For Waymo datasets, Install the official `waymo-open-dataset` by running the following command:
 ``` shell
@@ -50,14 +52,6 @@ docker exec -it centerpoint bash
 pip install --upgrade pip
 sudo apt install python3-testresources
 pip install waymo-open-dataset-tf-2-12-0==1.6.4
-
-cd data/
-ln -s /Dataset/Datasets/waymo_perception_v_1_3_1/no_elongation/ waymo
-
-cd waymo
-ln -s /Dataset/Datasets/openpcdet_waymo_v_1_3_1_trainval/raw_data/ raw_data
-
-cd ~/OpenPCDet/
 ```
 
 - Extract point cloud data from tfrecord and generate data infos by running the following command (it takes several hours, and you could refer to `data/waymo/waymo_processed_data_v0_5_0` to see how many records that have been processed):
@@ -78,7 +72,7 @@ python -m pcdet.datasets.waymo.waymo_dataset --func create_waymo_infos \
 
 - Please refer to the [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for more details.
 
-### 1.6 PCDET Installation
+### 1.5 PCDET Installation
 
 - Execute the container
 ```
@@ -91,27 +85,17 @@ cd ~/OpenPCDet
 sudo python setup.py develop
 ```
 
-- Install pybind11
+- To Build Python module, you have to install and wrap the c++ to python API.
 ``` shell
 cd ~/
 git clone https://github.com/pybind/pybind11.git
 cd pybind11
 cmake .
 sudo make install
-```
 
-- To Build Python module, you have to wrap the c++ to python API.
-``` shell
 cd ~/OpenPCDet/centerpoint/pybind
 cmake -BRelease
 cmake --build Release
-
-```
-
-- Copy Python module
-``` shell
-cd ~/OpenPCDet/
-cp centerpoint/pybind/tools/cp.cpython-38-x86_64-linux-gnu.so tools/
 ```
 
 ## 2) Train PCDET
@@ -170,7 +154,27 @@ rviz2
 <img src="sources/rviz2.png" align="center" width="100%">
 <img src="sources/fig1.png" align="center" width="100%">
 
-## 4) Usage: Inference Method using ROS2 *C++* Node on the Container ENV (Comming soon....)
+## 4) Usage: Inference Method using ROS2 *C++* Node with TensorRT on the Container ENV 
+
+### 4.0 Install `pybind11` and `centerpoint/pybind` module
+
+- If you already installed in the `1.5 PCDET Installation`, skip please.
+  - Install pybind11
+``` shell
+cd ~/
+git clone git@github.com:pybind/pybind11.git
+cd pybind11
+cmake .
+make install
+```
+
+- To evaluate TensorRT results, you have to wrap the c++ to python API.
+- Build Python module 
+``` shell
+cd centerpoint/pybind
+cmake -BRelease
+cmake --build Release
+```
 
 ### 4.1 Convert Onnx file from Pytorch 'pth' model file
 ``` shell
@@ -232,7 +236,10 @@ rviz2
 
 ## 5) Evaluation
 
-- Install pybind11 (if you already installed in the training step, skip please)
+### 5.0 Install `pybind11` and `centerpoint/pybind` module
+- If you already set in the `Section of 4.0`, please jump the `Section of 5.1`.
+- If you already installed in the `1.5 PCDET Installation`, skip please.
+  - Install pybind11
 ``` shell
 cd ~/
 git clone git@github.com:pybind/pybind11.git
@@ -241,7 +248,7 @@ cmake .
 make install
 ```
 
-- To evaluate TensorRT results, you have to wrap the c++ to python API. (if you already installed in the training step, skip please)
+- To evaluate TensorRT results, you have to wrap the c++ to python API.
 - Build Python module 
 ``` shell
 cd centerpoint/pybind
@@ -249,13 +256,73 @@ cmake -BRelease
 cmake --build Release
 ```
 
-- Copy Python module (if you already installed in the training step, skip please)
+### 5.1 Evaluation with pytorch model
 ``` shell
-cp centerpoint/pybind/tools/cp.cpython-38-x86_64-linux-gnu.so tools/
-
+docker exec -it centerpoint bash
+cd ~/OpenPCDet/tools/
+python test.py --cfg_file cfgs/waymo_models/centerpoint_pillar_inference.yaml --ckpt ../ckpt/checkpoint_epoch_24.pth
 ```
 
-### 5.1 Evaluation
+- Results as shown:
+```
+2024-07-08 07:59:21,802   INFO  
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/AP: 0.6204 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APH: 0.6137 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APL: 0.6204 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/AP: 0.5417 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APH: 0.5358 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APL: 0.5417 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/AP: 0.5329 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APH: 0.2887 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APL: 0.5329 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/AP: 0.4553 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APH: 0.2468 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APL: 0.4553 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APL: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APL: 0.0000 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/AP: 0.3267 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APH: 0.2730 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APL: 0.3267 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/AP: 0.3141 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.2625 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.3141 
+```
+
+- If you set `test: 25000` of `MAX_NUMBER_OF_VOXELS` at the `cfgs/waymo_models/centerpoint_pillar_inference.yaml` like TensorRT (`centerpoint/config.yaml`),
+- You can get more similar results as shown:
+```
+2024-07-08 09:57:04,120   INFO  
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/AP: 0.6199 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APH: 0.6132 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APL: 0.6199 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/AP: 0.5413 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APH: 0.5353 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APL: 0.5413 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/AP: 0.5327 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APH: 0.2885 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APL: 0.5327 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/AP: 0.4552 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APH: 0.2466 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APL: 0.4552 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APL: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APL: 0.0000 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/AP: 0.3262 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APH: 0.2729 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APL: 0.3262 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/AP: 0.3137 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.2625 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.3137
+```
+
+### 5.2 Evaluation with TensorRT model
 ``` shell
 docker exec -it centerpoint bash
 cd ~/OpenPCDet/tools/
@@ -264,29 +331,30 @@ python test.py --cfg_file cfgs/waymo_models/centerpoint_pillar_inference.yaml --
 
 - Results as shown:
 ```
-2024-06-11 05:36:52,125   INFO
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/AP: 0.5793
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APH: 0.5733
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APL: 0.5793
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/AP: 0.5150
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APH: 0.5095
-OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APL: 0.5150
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/AP: 0.6583
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APH: 0.3265
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APL: 0.6583
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/AP: 0.5964
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APH: 0.2959
-OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APL: 0.5964
-OBJECT_TYPE_TYPE_SIGN_LEVEL_1/AP: 0.0000
-OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APH: 0.0000
-OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APL: 0.0000
-OBJECT_TYPE_TYPE_SIGN_LEVEL_2/AP: 0.0000
-OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APH: 0.0000
-OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APL: 0.0000
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/AP: 0.4227
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APH: 0.3211
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APL: 0.4227
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/AP: 0.3966
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.3013
-OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.3966
+2024-07-08 09:08:53,073   INFO  
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/AP: 0.5755 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APH: 0.5697 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_1/APL: 0.5755 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/AP: 0.4995 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APH: 0.4944 
+OBJECT_TYPE_TYPE_VEHICLE_LEVEL_2/APL: 0.4995 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/AP: 0.5283 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APH: 0.2872 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_1/APL: 0.5283 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/AP: 0.4513 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APH: 0.2454 
+OBJECT_TYPE_TYPE_PEDESTRIAN_LEVEL_2/APL: 0.4513 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_1/APL: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/AP: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APH: 0.0000 
+OBJECT_TYPE_TYPE_SIGN_LEVEL_2/APL: 0.0000 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/AP: 0.2991 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APH: 0.2508 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_1/APL: 0.2991 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/AP: 0.2876 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APH: 0.2412 
+OBJECT_TYPE_TYPE_CYCLIST_LEVEL_2/APL: 0.2876 
+
 ```
